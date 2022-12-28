@@ -3,6 +3,8 @@ import { loginSchema, registerSchema, userSchema } from "../schemas/userSchema";
 import { publicProcedure, t } from "../utils/trpc";
 import bcrypt from "bcrypt";
 import { register } from "ts-node";
+import { emitWarning } from "process";
+const saltRounds = 10;
 
 export const userRouter = t.router({
   getUser: publicProcedure.input(userSchema).query(({ ctx, input }) => {}),
@@ -27,6 +29,14 @@ export const userRouter = t.router({
   registerUser: publicProcedure
     .input(registerSchema)
     .query(async ({ ctx, input }) => {
-      return await ctx.prisma.user.create({ data: input });
+      const password = await bcrypt.hash(input.password, saltRounds);
+
+      return await ctx.prisma.user.create({
+        data: {
+          name: input.name,
+          email: input.email,
+          password: password,
+        },
+      });
     }),
 });
