@@ -1,26 +1,26 @@
+import { Prisma, User } from "@prisma/client";
 import { inferAsyncReturnType, initTRPC } from "@trpc/server";
 import * as trpcExpress from "@trpc/server/adapters/express";
+import prisma from "./client";
 
 export const t = initTRPC.context<Context>().create();
 export const publicProcedure = t.procedure;
+
+declare module "express-session" {
+  interface SessionData {
+    user?: User;
+  }
+}
 
 export const createContext = ({
   req,
   res,
 }: trpcExpress.CreateExpressContextOptions) => {
-  const getUser = () => {
-    if (req.headers.authorization !== "secret") {
-      return null;
-    }
-    return {
-      name: "alex",
-    };
-  };
-
   return {
     req,
     res,
-    user: getUser(),
+    user: req.session.user,
+    prisma,
   };
 };
 type Context = inferAsyncReturnType<typeof createContext>;
